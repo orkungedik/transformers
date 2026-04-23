@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  sap-ai-assistant:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/models
+      - ./repos:/app/repos
+    environment:
+      - MODEL_PATH=/models/Qwen-Coder-7B-Instruct
+      - SAP_HOST=${SAP_HOST:-localhost}
+      - SAP_PORT=${SAP_PORT:-3300}
+      - SAP_CLIENT=${SAP_CLIENT:-100}
+      - SAP_USER=${SAP_USER:-}
+      - SAP_PASSWORD=${SAP_PASSWORD:-}
+      - AZURE_DEVOPS_REPO=${AZURE_DEVOPS_REPO:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - sap-ai-assistant
+    restart: unless-stopped
